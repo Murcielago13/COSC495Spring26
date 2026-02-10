@@ -1,0 +1,226 @@
+/* Tutorial Specific Styles - Standalone (No Bootstrap) */
+
+:root {
+  --primary-color: #4A90E2;
+  --secondary-color: #50E3C2;
+  --bg-color: #FAFAFA;
+  --text-color: #333;
+  --step-bg: #FFFFFF;
+  --step-border: #E0E0E0;
+  --link-color: #2980b9;
+}
+
+/* Reset and Base */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
+  color: var(--text-color);
+  background-color: var(--bg-color);
+  line-height: 1.7;
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+}
+
+/* Layout Container */
+body > * {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+/* Header Styling */
+header {
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #eee;
+}
+
+h1.title {
+  margin: 0;
+  color: #2C3E50;
+  font-size: 2.5rem;
+  line-height: 1.2;
+}
+
+p.subtitle {
+  font-size: 1.2rem;
+  color: #7f8c8d;
+  margin-top: 0.5rem;
+  margin-bottom: 0;
+}
+
+/* Headings */
+h1, h2, h3 {
+  color: #2C3E50;
+  font-weight: 700;
+  margin-top: 2rem;
+}
+
+h1 {
+    font-size: 2rem;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+  border-left: 5px solid var(--secondary-color);
+  padding-left: 1rem;
+  margin-top: 3rem;
+}
+
+/* Step Boxes */
+.step-box {
+  background: var(--step-bg);
+  border: 1px solid var(--step-border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+
+.step-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.step-number {
+  background: var(--primary-color);
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+/* Alerts */
+.note, .tip {
+  padding: 1rem;
+  border-radius: 6px;
+  margin-top: 1.5rem;
+}
+
+.note {
+  background-color: #FFF3CD;
+  border: 1px solid #FFEEBA;
+  color: #856404;
+}
+
+.tip {
+  background-color: #D1E7DD;
+  border: 1px solid #BADBCC;
+  color: #0F5132;
+}
+
+/* Code */
+code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  background-color: #f1f3f5;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85em;
+  color: #d63384; /* Professional pink/red for inline code */
+  border: 1px solid #e9ecef;
+}
+
+pre {
+  background-color: #1a1a1a;
+  color: #f8f8f2;
+  padding: 1.25rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  line-height: 1.5;
+  font-size: 0.9em;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border: 1px solid #333;
+}
+
+pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+}
+
+/* Syntax Highlighting for Dark Theme */
+pre .kw { color: #66d9ef; font-weight: bold; } /* Keyword */
+pre .dt { color: #66d9ef; } /* DataType */
+pre .dv { color: #ae81ff; } /* DecVal (Number) */
+pre .bn { color: #ae81ff; } /* BaseN */
+pre .fl { color: #ae81ff; } /* Float */
+pre .ch { color: #e6db74; } /* Char */
+pre .st { color: #e6db74; } /* String */
+pre .co { color: #75715e; font-style: italic; } /* Comment */
+pre .ot { color: #a6e22e; } /* Other */
+pre .al { color: #f92672; font-weight: bold; } /* Alert */
+pre .fu { color: #a6e22e; } /* Function */
+pre .er { color: #f92672; font-weight: bold; } /* Error */
+pre .wa { color: #e6db74; font-weight: bold; } /* Warning */
+pre .cn { color: #ae81ff; } /* Constant */
+pre .sc { color: #ae81ff; } /* SpecialChar */
+pre .vs { color: #e6db74; } /* VerbatimString */
+pre .ss { color: #e6db74; } /* SpecialString */
+pre .im { color: #a6e22e; } /* Import */
+pre .va { color: #f8f8f2; } /* Variable */
+pre .cf { color: #f92672; font-weight: bold; } /* ControlFlow */
+pre .op { color: #f92672; } /* Operator */
+pre .bu { color: #a6e22e; } /* BuiltIn */
+pre .ex { color: #a6e22e; } /* Extension */
+pre .pp { color: #f92672; } /* Preprocessor */
+pre .at { color: #a6e22e; } /* Attribute */
+pre .do { color: #75715e; font-style: italic; } /* Documentation */
+pre .an { color: #75715e; font-weight: bold; font-style: italic; } /* Annotation */
+pre .cv { color: #75715e; font-weight: bold; font-style: italic; } /* CommentVar */
+pre .in { color: #75715e; font-weight: bold; font-style: italic; } /* Information */
+
+/* Links */
+a {
+  color: var(--link-color);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Table of Contents */
+#TOC {
+    background: #fff;
+    border: 1px solid #eee;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+#TOC ul {
+    list-style: none;
+    padding-left: 1rem;
+}
+
+#TOC > ul {
+    padding-left: 0;
+}
+
+#TOC a {
+    color: #555;
+    text-decoration: none;
+}
+
+#TOC a:hover {
+    color: var(--primary-color);
+}

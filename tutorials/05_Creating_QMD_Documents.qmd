@@ -1,0 +1,576 @@
+---
+title: "Tutorial 5: Creating .qmd Documents"
+subtitle: "Building your own Quarto documents from scratch"
+date: last-modified
+format:
+  html:
+    embed-resources: true
+    theme: none
+    css: tutorial_style.css
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  eval: false
+  warning: false
+  message: false
+---
+
+# Introduction
+
+In this tutorial, you will learn how to create your own **Quarto (.qmd) documents** from scratch. While Tutorial 3 covered running analysis in existing documents, this tutorial focuses on building new documents with proper structure: YAML front matter, formatted text, and executable code chunks in R and/or Python.
+
+<div class="note">
+<strong>Prerequisite:</strong> Before starting this tutorial, ensure you have completed <a href="03_Running_Analysis.html">Tutorial 3: Running Analysis</a> and are comfortable with Positron's interface.
+</div>
+
+You will learn how to:
+
+1.  **Create a new .qmd file** in Positron.
+2.  **Write a YAML header** to configure document metadata and output.
+3.  **Format text** using Markdown syntax.
+4.  **Insert and execute code chunks** in R and Python.
+5.  **Add images, tables, and citations** to enhance your document.
+6.  **Render the document** to HTML, PDF, or other formats.
+
+By the end, you will be able to create professional‑quality reports for your data analysis projects.
+
+---
+
+# Step 1: Create a New .qmd File
+
+<div class="step-box">
+<span class="step-number">1</span> **Open Positron**
+
+Launch Positron and ensure your `Math495Spring26` folder is open as a project (see Tutorial 2).
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Create a New File**
+
+Go to **File** → **New File** or use the keyboard shortcut `Ctrl+N` (Windows/Linux) or `Cmd+N` (Mac). A new untitled tab will appear.
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Save as .qmd**
+
+Click **File** → **Save As**, navigate to a suitable location within your project (e.g., the project root or a subfolder), and name the file with the `.qmd` extension (e.g., `my_analysis.qmd`).
+
+**Tip:** Quarto documents can also use `.Rmd` (R Markdown) or `.ipynb` (Jupyter notebook) extensions, but `.qmd` is the recommended extension for Quarto.
+</div>
+
+<div class="step-box">
+<span class="step-number">4</span> **Set Language Mode**
+
+Positron may automatically detect the file type. If not, click the language mode indicator (usually "Plain Text") in the bottom‑right corner and select **Quarto**.
+</div>
+
+---
+
+# Step 2: Write the YAML Header
+
+The YAML header (also called front matter) is a block at the top of the file between two lines of three hyphens (`---`). It defines metadata and rendering options.
+
+<div class="step-box">
+<span class="step-number">1</span> **Basic YAML Structure**
+
+Add the following at the very top of your file:
+
+```yaml
+---
+title: "My Analysis Report"
+author: "Your Name"
+date: last-modified
+format: html
+---
+```
+
+*   `title`: The document title.
+*   `author`: Your name (or multiple authors as a list).
+*   `date`: Use `last-modified` to automatically update the date on each render.
+*   `format`: The output format (`html`, `pdf`, `docx`, etc.).
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Common YAML Options**
+
+Expand your YAML header with additional options:
+
+```yaml
+---
+title: "My Analysis Report"
+subtitle: "Exploring the Poultry Litter Dataset"
+author: 
+  - "Your Name"
+  - "Collaborator Name"
+date: last-modified
+format:
+  html:
+    toc: true
+    number-sections: true
+    theme: cosmo
+  pdf:
+    documentclass: article
+    papersize: a4
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+```
+
+*   `subtitle`: A subtitle below the title.
+*   Multiple authors are written as a YAML list (indented with a dash).
+*   `format` can be specified per output with options (e.g., `toc: true` adds a table of contents).
+*   `execute` controls code execution globally (override per chunk).
+</div>
+
+<div class="note">
+<strong>YAML Syntax Rules:</strong>
+*   Indentation matters! Use spaces (not tabs).
+*   Key‑value pairs are separated by a colon and a space.
+*   Lists are indicated by a dash and a space.
+*   The header must be the first thing in the file and surrounded by `---` lines.
+</div>
+
+---
+
+# Step 3: Write Formatted Text with Markdown
+
+After the YAML header, you can write your document content using Markdown. Markdown is a lightweight markup language that converts to formatted HTML.
+
+<div class="step-box">
+<span class="step-number">1</span> **Headings**
+
+Use hash symbols (`#`) for headings. More hashes mean deeper levels.
+
+```markdown
+# Main Title (Heading 1)
+## Section (Heading 2)
+### Subsection (Heading 3)
+```
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Emphasis**
+
+*Italic* and **bold** text:
+
+```markdown
+*italic* or _italic_
+**bold** or __bold__
+***bold italic*** or ___bold italic___
+```
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Lists**
+
+**Bulleted list:**
+
+```markdown
+- Item one
+- Item two
+  - Indented sub‑item
+- Item three
+```
+
+**Numbered list:**
+
+```markdown
+1. First item
+2. Second item
+   1. Sub‑item (use two spaces or a tab)
+3. Third item
+```
+</div>
+
+<div class="step-box">
+<span class="step-number">4</span> **Links and Images**
+
+**Link:** `[text](URL)`
+
+```markdown
+[Quarto documentation](https://quarto.org/docs/)
+```
+
+**Image:** `![alt text](image.png)`
+
+```markdown
+![Poultry litter data plot](figures/plot.png)
+```
+
+The image file must be in the specified path relative to the .qmd file.
+</div>
+
+<div class="step-box">
+<span class="step-number">5</span> **Code Inline and Blocks**
+
+**Inline code:** wrap with backticks.
+
+```markdown
+Use the `mean()` function to compute the average.
+```
+
+**Code block (non‑executable):** triple backticks with language name.
+
+````markdown
+```r
+x <- 1:10
+mean(x)
+```
+````
+
+(Executable code chunks are covered in the next step.)
+</div>
+
+<div class="step-box">
+<span class="step-number">6</span> **Tables**
+
+Use hyphens for headers and pipes for columns:
+
+```markdown
+| Variable | Description | Units |
+|----------|-------------|-------|
+| Weight   | Bird weight | kg    |
+| Feed     | Feed intake | g/day |
+| Age      | Bird age    | days  |
+```
+
+**Tip:** Many Positron extensions can generate Markdown tables from data frames automatically.
+</div>
+
+<div class="step-box">
+<span class="step-number">7</span> **Blockquotes and Horizontal Rules**
+
+**Blockquote:**
+
+```markdown
+> This is a quoted paragraph.
+> It can span multiple lines.
+```
+
+**Horizontal rule:** three hyphens, asterisks, or underscores.
+
+```markdown
+---
+```
+
+</div>
+
+---
+
+# Step 4: Insert Executable Code Chunks
+
+Code chunks are blocks of code that can be executed when the document is rendered. They are enclosed in triple backticks with curly braces specifying the language and options.
+
+<div class="step-box">
+<span class="step-number">1</span> **Basic Code Chunk Syntax**
+
+````markdown
+```{{r eval=FALSE}}
+# R code here
+library(tidyverse)
+data <- read_csv("data.csv")
+```
+````
+
+For Python:
+
+````markdown
+```{{python eval=FALSE}}
+# Python code here
+import pandas as pd
+df = pd.read_csv("data.csv")
+```
+````
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Code Chunk Options**
+
+Options are placed inside the curly braces after the language, separated by commas.
+
+````markdown
+```{{r echo=FALSE, warning=FALSE, eval=FALSE}}
+# This code will run but not appear in the output; warnings are suppressed
+summary(data)
+```
+````
+
+Common options:
+
+*   `echo=FALSE` – hide the code (only output shown).
+*   `eval=FALSE` – do not execute the code (good for displaying code examples).
+*   `include=FALSE` – run the code but hide both code and output (useful for setup).
+*   `warning=FALSE`, `message=FALSE` – suppress warnings and messages.
+*   `fig.width=7, fig.height=5` – set plot dimensions (in inches).
+*   `cache=TRUE` – cache results for faster re‑rendering.
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Chunk Labels**
+
+You can give a chunk a label for cross‑referencing and caching.
+
+`````
+```{{r load-data, eval=FALSE}}
+data <- read_csv("data.csv")
+```
+`````
+
+Labels must be unique, contain only letters, numbers, and hyphens, and cannot start with a number.
+</div>
+
+<div class="step-box">
+<span class="step-number">4</span> **Inline Code**
+
+You can also embed R or Python code directly in text using `` `r ` `` or `` `python ` ``.
+
+````markdown
+The mean weight is `{{r mean(data$weight)}}` kg.
+````
+
+The code will be executed and the result inserted into the text.
+</div>
+
+<div class="step-box">
+<span class="step-number">5</span> **Running Code Interactively**
+
+While writing, you can run chunks individually:
+
+*   Click the green **Play** button (▶) at the top‑right of the chunk.
+*   Use `Ctrl+Enter` (Windows/Linux) or `Cmd+Enter` (Mac) to run the current chunk.
+*   Use `Ctrl+Shift+Enter` (Windows/Linux) or `Cmd+Shift+Enter` (Mac) to run all chunks above.
+
+Output appears directly below the chunk in the editor.
+</div>
+
+---
+
+# Step 5: Add Images, Tables, and Citations
+
+<div class="step-box">
+<span class="step-number">1</span> **Images from Code Chunks**
+
+Plots generated by code chunks are automatically included in the rendered document.
+
+`````
+```{{r fig.width=7, fig.height=5}}
+library(ggplot2)
+ggplot(data, aes(x = age, y = weight)) +
+  geom_point()
+```
+`````
+
+The plot will be inserted with the specified dimensions.
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **External Images**
+
+As shown earlier, use Markdown syntax `![alt](path)`.
+
+You can also use HTML for more control:
+
+```html
+<img src="figures/plot.png" alt="Plot" width="600"/>
+```
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Tables from Data**
+
+Display data frames as nicely formatted tables with the `kable` function (from the `knitr` package).
+
+`````
+```{{r}}
+library(knitr)
+head(data) |> kable()
+```
+`````
+
+Alternatively, use the `gt`, `flextable`, or `DT` packages for advanced table formatting.
+</div>
+
+<div class="step-box">
+<span class="step-number">4</span> **Citations**
+
+Quarto supports bibliographies via BibTeX, CSL, or other formats.
+
+1.  Create a bibliography file (e.g., `references.bib`) with entries like:
+
+    ```bibtex
+    @article{author2023,
+      title = {Title},
+      author = {Author, A.},
+      year = {2023},
+      journal = {Journal Name}
+    }
+    ```
+
+2.  Add a `bibliography` field to your YAML:
+
+    ```yaml
+    bibliography: references.bib
+    ```
+
+3.  Cite in text with `@author2023` or `[@author2023]`.
+
+Rendered output will include a reference section.
+</div>
+
+---
+
+# Step 6: Render the Document
+
+Once your document is ready, you can render it to the desired output format.
+
+<div class="step-box">
+<span class="step-number">1</span> **Render Button**
+
+Click the **Render** button (👁️ or "Render") in the toolbar above the editor. Choose the output format if prompted.
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Keyboard Shortcut**
+
+`Ctrl+Shift+K` (Windows/Linux) or `Cmd+Shift+K` (Mac) renders the document using the default format.
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Command Palette**
+
+Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac), type "Quarto: Render", and select the format.
+</div>
+
+<div class="step-box">
+<span class="step-number">4</span> **Monitor Rendering**
+
+Watch the **Output** pane for progress messages. The first render may take longer as packages are loaded.
+
+When finished, the rendered file (e.g., `my_analysis.html`) will open in Positron's viewer or your default browser.
+</div>
+
+<div class="step-box">
+<span class="step-number">5</span> **Multiple Outputs**
+
+You can render to multiple formats simultaneously by specifying them in the YAML:
+
+```yaml
+format:
+  html: default
+  pdf: default
+  docx: default
+```
+
+Then render with the **Render All Formats** command (available in the Render button dropdown).
+</div>
+
+---
+
+# Step 7: Document Organization Tips
+
+<div class="step-box">
+<strong>Use Chunk References</strong>
+
+Refer to figures, tables, and equations with labels.
+
+````markdown
+```{{r fig-plot, fig.cap="My figure."}}
+plot(x, y)
+```
+````
+
+In text: `Figure \@ref(fig:fig-plot)`.
+</div>
+
+<div class="step-box">
+<strong>Parameterized Reports</strong>
+
+Use parameters to make your document reusable with different inputs.
+
+YAML:
+
+```yaml
+params:
+  data_file: "data.csv"
+  year: 2023
+```
+
+In code chunks, access parameters via `params$data_file` (R) or `params["data_file"]` (Python).
+</div>
+
+<div class="step-box">
+<strong>Include Child Documents</strong>
+
+Break long documents into smaller files and include them:
+
+````markdown
+```{{r child="section1.qmd"}}
+```
+````
+</div>
+
+<div class="step-box">
+<strong>Custom CSS and Templates</strong>
+
+For HTML output, you can link a custom CSS file:
+
+```yaml
+format:
+  html:
+    css: styles.css
+```
+
+For PDF, use a LaTeX template.
+</div>
+
+---
+
+# Troubleshooting
+
+<div class="step-box">
+<strong>Code Doesn't Run</strong>
+
+*   Check that the language engine is installed (R, Python).
+*   Verify package installations (`install.packages()` or `pip install`).
+*   Look for syntax errors in the code chunk.
+</div>
+
+<div class="step-box">
+<strong>Images Not Appearing</strong>
+
+*   Ensure the image path is relative to the .qmd file.
+*   Check that the image file exists and the extension is correct.
+*   For plots generated by code, verify that the code runs without errors.
+</div>
+
+<div class="step-box">
+<strong>YAML Parsing Errors</strong>
+
+*   Check indentation (use spaces, not tabs).
+*   Ensure colons are followed by a space.
+*   Verify that the `---` lines are exactly three hyphens and no extra characters.
+</div>
+
+<div class="step-box">
+<strong>Rendering is Slow</strong>
+
+*   Use `cache=TRUE` on chunks that take a long time.
+*   Reduce the number of plots or data size during development.
+*   Consider rendering only specific sections with `quarto preview`.
+</div>
+
+<div class="tip">
+<strong>Congratulations!</strong>
+You now know how to create complete Quarto documents from scratch. You can:
+
+*   Structure a document with YAML front matter.
+*   Write formatted text using Markdown.
+*   Insert and execute R and Python code chunks.
+*   Include images, tables, and citations.
+*   Render to multiple output formats.
+
+Practice by creating a new document for your own analysis—start with a simple outline and gradually add complexity. Happy writing!
+</div>

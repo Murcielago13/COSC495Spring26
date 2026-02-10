@@ -1,0 +1,222 @@
+---
+title: "Lecture 4: Advanced Statistical Modeling (STUDENT)"
+subtitle: "From Linear Models to Machine Learning"
+author: "MATH/COSC 495 Consulting Course"
+date: "2026-01-25"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    smooth-scroll: true
+    code-fold: true
+    code-summary: "Show code"
+    code-copy: true
+    code-tools: true
+    fig-cap-location: bottom
+    fig-alt: true
+    fig-responsive: true
+    self-contained: true
+    html-math-method: mathml
+    theme:
+      - cosmo
+      - lumen
+      - materia
+      - minty
+    css: ../accessibility.css
+execute:
+  warning: false
+  message: false
+  echo: true
+editor: source
+accessibility:
+  html-lang: "en"
+  skip-link: true
+  semantic-headings: true
+  aria-label-images: true
+  aria-label-tables: true
+  aria-description-figures: true
+---
+
+```{r setup, include=FALSE}
+# Load required libraries
+library(tidyverse)
+library(lubridate)
+library(knitr)
+library(kableExtra)
+library(here)
+library(broom)
+library(broom.mixed)
+library(lme4)
+library(lmerTest)
+library(mgcv)
+library(caret)
+library(randomForest)
+library(patchwork)
+library(plotly)
+
+# Load cleaned data
+cleaned_data <- read_csv("../data/processed/Final_Cleaned_Litter_Survey.csv",
+                         show_col_types = FALSE)
+
+# Convert factors for analysis
+cleaned_data <- cleaned_data %>%
+  mutate(
+    across(c(season, moisture_level, paw_score_level, breed, bird_type, farm_no), as.factor),
+    moisture_percent_num = as.numeric(moisture_percent_num),
+    paw_score_num = as.numeric(paw_score_num),
+    caked_litter_num = as.numeric(caked_litter_num),
+    survey_date = as.Date(survey_date),
+    first_date_placed = as.Date(first_date_placed),
+    last_date_sold = as.Date(last_date_sold)
+  )
+
+# Set seed for reproducibility
+set.seed(4952026)
+```
+
+# Introduction
+
+## Moving Beyond Preliminary Results
+
+In **Lecture 2**, we saw that our baseline linear models explained only a small fraction of the variance in FCR ($R^2 \approx 0.05$). This suggests either missing variables or **complex interactions** that we haven't yet captured.
+
+In this session, we will move from "Average Effects" to "Minute Insights" by applying advanced modeling techniques.
+
+### Learning Objectives
+
+By the end of this lecture, you will be able to:
+
+1.  **Build** and **diagnose** models with interaction terms
+2.  **Implement** mixed-effects models to handle hierarchical data (flocks within farms)
+3.  **Perform** cluster-specific modeling to identify local sensitivities
+4.  **Apply** machine learning to rank feature importance non-parametrically
+
+---
+
+# Hierarchical and Complex Relationships
+
+## Activity 1: Interaction Effects
+
+Does the impact of moisture depend on the season? Or the bird type?
+
+**Task**: Fit a linear model where `moisture_percent_num` interacts with `season`. Visualize the slopes for each season.
+
+```{r activity-1}
+#| label: interaction-model
+
+# TODO: Fit lm(feed_conversion ~ moisture_percent_num * season + ...)
+# TODO: Use ggplot to show the moisture-FCR relationship faceted by season.
+
+```
+
+**Guided Questions**:
+
+1. Does the "Moisture Penalty" get worse in the Summer? (Look for a positive interaction coefficient).
+2. Is there a season where moisture seems to have *no* effect on FCR? What might explain this?
+
+---
+
+## Activity 2: Accounting for the 'Farm Effect'
+
+Our dataset has multiple flocks from the same farms. Are observations truly independent?
+
+**Task**: Use `lmer()` from the `lme4` package to fit a model with a **Random Intercept** for `farm_no`.
+
+```{r activity-2}
+#| label: mixed-model
+
+# TODO: Fit mixed_model <- lmer(feed_conversion ~ ... + (1 | farm_no), data = model_data)
+# TODO: Calculate the "Intraclass Correlation Coefficient" (ICC) or simple variance proportion.
+
+```
+
+**Guided Questions**:
+
+1. What percentage of the total variance in FCR is due to "Farm-to-Farm" differences that we aren't measuring directly?
+2. If two farms have identical moisture, paw scores, and bird types, can we still predict which one will perform better? Why?
+
+---
+
+# Segmented Modeling: The "Minute" Analysis
+
+## Activity 3: Is Moisture Equally Harmful Everywhere?
+
+In Lecture 3, you identified 4 clusters of farms. Now, let's see if our model coefficients change if we look at each cluster separately.
+
+**Task**: 
+
+1. Re-run your K-means clustering logic.
+2. Group the data by cluster and fit a separate linear model for each.
+3. Compare the coefficient for `moisture_percent_num` across the clusters.
+
+```{r activity-3}
+#| label: cluster-specific-modeling
+
+# TODO: Run kmeans, then nest() and map() a linear model to each group.
+# TODO: Extract the moisture coefficient for each segment.
+
+```
+
+**Guided Questions**:
+
+1. In the "High Performers" cluster, is moisture still a significant predictor of FCR?
+2. In the "Challenged Farms" cluster, how much does the FCR increase for every 1% increase in moisture? Compare this to the global average you found in Lecture 2.
+3. Why might a "Challenged" farm benefit more from a 5% reduction in moisture than a "High Performer"?
+
+---
+
+# Non-linearities and Machine Learning
+
+## Activity 4: Finding Thresholds with GAMs
+
+Linear models assume a straight-line relationship. Generalized Additive Models (GAMs) allow the data to "bend."
+
+**Task**: Fit a GAM using `mgcv::gam()` with a smooth term for `age_days`.
+
+```{r activity-4}
+#| label: gam-thresholds
+
+# TODO: Fit gam(feed_conversion ~ s(age_days) + moisture_percent_num + ..., data = model_data)
+# TODO: Plot the smooth term.
+
+```
+
+**Guided Questions**:
+
+1. Is the relationship between Age and FCR linear? Or is there an "optimal" age window?
+2. Looking at the partial dependence plot, at what moisture level does the penalty start to "steepen"?
+
+---
+
+## Activity 5: Machine Learning Feature Importance
+
+**Task**: Train a Random Forest model to predict FCR. Plot the "Variable Importance."
+
+```{r activity-5}
+#| label: random-forest
+
+# TODO: Use randomForest(feed_conversion ~ ., data = model_data)
+# TODO: Plot importance(rf_model).
+
+```
+
+**Guided Questions**:
+
+1. Does Random Forest agree with your Linear Model about which variable is "most important"?
+2. Are there variables that appeared "weak" in Lecture 2 but show up as highly important here? (This often happens if they have complex interactions).
+
+---
+
+# Summary and Strategic Recommendation
+
+You have now moved from a simple global model to a series of sophisticated, segmented tools. 
+
+**The Final Mission**:
+
+You are a consultant for a large poultry integrator. They have a limited budget for "Technical Advisor" visits.
+
+1. Which **Cluster** of farms should they visit first?
+2. What specific **Prediction Tool** (Linear, Mixed, or Segmented) would you give them to identify high-risk flocks *before* they are sold?
+3. What is your "Minute Insight" that justifies the extra complexity of these models over the simple ones in Lecture 2?

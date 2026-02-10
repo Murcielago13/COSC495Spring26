@@ -1,0 +1,395 @@
+---
+title: "Tutorial 4: GitHub + Positron Integration"
+subtitle: "Version control and publishing your work"
+date: last-modified
+format:
+  html:
+    embed-resources: true
+    theme: none
+    css: tutorial_style.css
+    toc: true
+    number-sections: true
+---
+
+# Introduction
+
+In this tutorial, you will learn how to integrate **GitHub** with **Positron** for version control and publishing your work. GitHub is a platform for hosting Git repositories, allowing you to track changes, collaborate with others, and share your code. Positron provides seamless integration with Git and GitHub, making it easy to push your projects to a remote repository.
+
+<div class="note">
+<strong>Prerequisite:</strong> Before starting this tutorial, ensure you have completed <a href="03_Running_Analysis.html">Tutorial 3: Running Analysis</a> and have a basic understanding of Git. If you are new to Git, we recommend reviewing a beginner Git tutorial first.
+</div>
+
+You will learn how to:
+
+1.  **Set up a GitHub account** (if you don't already have one).
+2.  **Configure Git credentials** securely using the `usethis` and `gitcreds` R packages.
+3.  **Create a new GitHub repository** and connect it to your local project.
+4.  **Publish your project** to GitHub directly from Positron.
+5.  **Clone an existing repository** to start working on a shared project.
+
+---
+
+# Step 1: Create a GitHub Account
+
+If you already have a GitHub account, you can skip this step.
+
+<div class="step-box">
+<span class="step-number">1</span> **Sign Up for GitHub**
+
+Go to [github.com](https://github.com) and click **Sign up**.
+
+*   Enter your email address, a password, and a username.
+*   Complete the verification steps (email confirmation, CAPTCHA).
+*   Choose the **Free** plan (no payment required).
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Set Up Your Profile**
+
+After signing up, consider adding a profile picture and a short bio. This helps others recognize you in collaborative projects.
+
+**Tip:** Use the same email address for GitHub that you will use for Git on your local machine.
+</div>
+
+---
+
+# Step 2: Install and Configure Git
+
+Git is a version control system that tracks changes to your files. Positron includes Git, but you need to configure it with your identity.
+
+<div class="step-box">
+<span class="step-number">1</span> **Check Git Installation**
+
+Open the **Terminal** pane in Positron and run:
+
+```bash
+git --version
+```
+
+You should see a version number (e.g., `git version 2.43.0`). If Git is not installed, follow the installation instructions on [git-scm.com](https://git-scm.com/downloads).
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Configure Your Identity**
+
+In the Terminal, run the following commands (replace with your own name and email):
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+```
+
+**Important:** Use the **same email address** associated with your GitHub account.
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Verify Configuration**
+
+Run:
+
+```bash
+git config --list
+```
+
+Look for `user.name` and `user.email` to confirm they are set correctly.
+</div>
+
+---
+
+# Step 3: Secure Token Storage with `usethis` and `gitcreds`
+
+GitHub no longer accepts passwords for Git operations; you must use a **Personal Access Token (PAT)**. The `usethis` and `gitcreds` R packages help you create and store tokens securely.
+
+<div class="step-box">
+<span class="step-number">1</span> **Install Required R Packages**
+
+Open the **R Console** in Positron and run:
+
+```r
+install.packages(c("usethis", "gitcreds"))
+```
+
+This installs both packages.
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Create a GitHub Personal Access Token**
+
+Run the following function in the R Console:
+
+```r
+usethis::create_github_token()
+```
+
+This will open your browser to GitHub's token creation page with recommended scopes pre‑selected.
+
+*   **Token description**: Enter something meaningful, e.g., "Positron on my laptop".
+*   **Expiration**: Choose a suitable expiration (e.g., 90 days) or "No expiration" (less secure).
+*   **Select scopes**: The `usethis` function pre‑selects the necessary scopes (repo, user, workflow). Do not change them.
+*   Click **Generate token**.
+
+**Important:** **Copy the token immediately** and store it in a safe place. You will not be able to see it again!
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Store the Token Securely with `gitcreds`**
+
+Back in the R Console, run:
+
+```r
+gitcreds::gitcreds_set()
+```
+
+You will be prompted for your credential details:
+
+1.  When asked "Enter password or token:", paste the **PAT you just copied**.
+2.  Press Enter.
+
+The token is now stored in your system's credential manager (Keychain on macOS, Credential Manager on Windows, libsecret on Linux).
+</div>
+
+<div class="step-box">
+<span class="step-number">4</span> **Verify Token Storage**
+
+Run:
+
+```r
+gitcreds::gitcreds_get()
+```
+
+It should display your GitHub username and the token's description, confirming that the token is stored correctly.
+</div>
+
+<div class="note">
+<strong>Why use a PAT?</strong>
+Personal Access Tokens are more secure than passwords because they can be scoped to specific permissions and revoked individually. The `gitcreds` package ensures the token is stored securely and used automatically by Git.
+</div>
+
+---
+
+# Step 4: Create a New GitHub Repository
+
+Now you will create a remote repository on GitHub and connect your local project to it.
+
+<div class="step-box">
+<span class="step-number">1</span> **Go to GitHub**
+
+Log in to [github.com](https://github.com) and click the **+** icon in the top‑right corner, then select **New repository**.
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Fill Repository Details**
+
+*   **Repository name**: Choose a name, e.g., `Math495Spring26`.
+*   **Description** (optional): "Consulting course materials and analysis."
+*   **Visibility**: **Public** (anyone can view) or **Private** (only you and collaborators can view). For course work, Public is fine.
+*   **Initialize this repository with**: **Do not add** any files (we will push existing files).
+*   Click **Create repository**.
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Copy the Remote URL**
+
+After creation, GitHub shows instructions for connecting an existing repository. Copy the **HTTPS URL** (it looks like `https://github.com/your-username/Math495Spring26.git`).
+
+**Note:** If you prefer SSH, you can use the SSH URL, but HTTPS with token authentication is simpler for beginners.
+</div>
+
+---
+
+# Step 5: Connect Local Project to GitHub
+
+Now you will turn your local `Math495Spring26` folder into a Git repository and link it to the remote GitHub repository.
+
+<div class="step-box">
+<span class="step-number">1</span> **Initialize Git in Your Project**
+
+In the Terminal, navigate to your project root (if not already there):
+
+```bash
+cd /home/deepak/Desktop/Math495Spring26
+```
+
+Then initialize Git:
+
+```bash
+git init
+```
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Add the Remote Repository**
+
+```bash
+git remote add origin https://github.com/your-username/Math495Spring26.git
+```
+
+Replace the URL with the one you copied.
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Stage and Commit Your Files**
+
+Stage all files in the project:
+
+```bash
+git add .
+```
+
+Commit them with a message:
+
+```bash
+git commit -m "Initial commit: course materials and tutorials"
+```
+</div>
+
+<div class="step-box">
+<span class="step-number">4</span> **Push to GitHub**
+
+Push your commits to the remote repository:
+
+```bash
+git push -u origin main
+```
+
+If your default branch is named `master` (older Git versions), use:
+
+```bash
+git push -u origin master
+```
+
+**First‑time push:** Git will ask for credentials. Because you stored your PAT with `gitcreds`, it should automatically use it. If prompted, enter your GitHub username and paste the PAT as the password.
+
+After success, refresh your GitHub repository page—you should see all your files.
+</div>
+
+---
+
+# Step 6: Publishing from Positron
+
+Positron provides a visual interface for Git operations, making it easy to commit and push changes.
+
+<div class="step-box">
+<span class="step-number">1</span> **Open the Source Control View**
+
+Click the **Source Control** icon (looks like a Git branch) in the Activity Bar on the left. You'll see a list of changed files.
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Stage Changes**
+
+Check the boxes next to the files you want to commit, or click the **+** next to each file to stage them.
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Commit**
+
+Type a commit message in the message box (e.g., "Update lecture 1 analysis") and click the checkmark (✓) to commit.
+</div>
+
+<div class="step-box">
+<span class="step-number">4</span> **Push**
+
+After committing, click the **...** (more actions) menu in the Source Control view and select **Push**. Alternatively, use the **Sync Changes** button (circular arrows) to push and pull simultaneously.
+</div>
+
+<div class="tip">
+<strong>Keyboard Shortcuts:</strong>
+
+*   `Ctrl+Shift+G` (Windows/Linux) or `Cmd+Shift+G` (Mac) – Open Source Control view.
+*   `Ctrl+Enter` (Windows/Linux) or `Cmd+Enter` (Mac) – Commit staged changes.
+</div>
+
+---
+
+# Step 7: Cloning an Existing Repository
+
+If you need to work on a repository that already exists on GitHub (e.g., a team project), you can clone it directly in Positron.
+
+<div class="step-box">
+<span class="step-number">1</span> **Get the Repository URL**
+
+On the GitHub repository page, click the green **Code** button and copy the HTTPS URL.
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Clone in Positron**
+
+In Positron, go to **File** → **Clone Repository**. Paste the URL and choose a local folder where the repository will be saved.
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Open the Cloned Project**
+
+After cloning, Positron will ask if you want to open the cloned folder. Click **Open** to start working.
+</div>
+
+<div class="note">
+<strong>Collaboration Tip:</strong>
+Before starting work, always pull the latest changes (`git pull` or use the **Pull** button in Source Control) to avoid conflicts.
+</div>
+
+---
+
+# Troubleshooting
+
+<div class="step-box">
+<strong>Git Credentials Not Working</strong>
+
+If Git still asks for a password after setting up the PAT:
+
+1.  Run `gitcreds::gitcreds_get()` to verify the token is stored.
+2.  Ensure your Git remote URL uses HTTPS (not SSH).
+3.  On Windows, you may need to configure the credential helper:
+
+```bash
+git config --global credential.helper manager
+```
+
+4.  Try re‑entering the token with `gitcreds::gitcreds_set()`.
+</div>
+
+<div class="step-box">
+<strong>Push Rejected (Non‑Fast‑Forward)</strong>
+
+This happens when the remote repository has commits that you don't have locally.
+
+**Solution:** Pull first, then push.
+
+```bash
+git pull origin main --rebase
+git push origin main
+```
+
+Or use the **Sync Changes** button in Positron's Source Control view.
+</div>
+
+<div class="step-box">
+<strong>Large Files or Slow Push</strong>
+
+GitHub has a file size limit (100 MB). If you accidentally committed large files (e.g., datasets), consider using Git LFS (Large File Storage) or adding those files to `.gitignore`.
+
+To remove a large file already committed:
+
+```bash
+git rm --cached large_file.csv
+git commit -m "Remove large file"
+git push
+```
+
+Then add `large_file.csv` to your `.gitignore` file.
+</div>
+
+<div class="tip">
+<strong>Congratulations!</strong>
+You have successfully integrated GitHub with Positron. You can now:
+
+*   Securely store your GitHub credentials with `usethis` and `gitcreds`.
+*   Create and push to remote repositories.
+*   Use Positron's visual Git interface for daily version control.
+*   Clone existing projects to collaborate with others.
+
+This workflow will be essential for sharing your analysis and collaborating on projects throughout the course.
+</div>
+
+[Next Tutorial: Creating .qmd Documents →](05_Creating_QMD_Documents.html)

@@ -1,0 +1,147 @@
+---
+title: "Tutorial 1: Setup and Installation"
+subtitle: "Preparing your environment for MATH/COSC 495"
+date: last-modified
+format:
+  html:
+    embed-resources: true
+    theme: none
+    css: tutorial_style.css
+    toc: true
+    number-sections: true
+---
+
+# Introduction
+
+Welcome to the **MATH/COSC 495** consulting course! To analyze the poultry litter data, we will use a modern data science stack. This tutorial will guide you through installing the necessary tools on your laptop.
+
+<div class="note">
+<strong>Before you begin:</strong> Ensure you have administrator/sudo privileges on your computer and a stable internet connection.
+</div>
+
+You will need to install four components:
+
+1.  **R**: A statistical programming language.
+2.  **Python**: A general-purpose programming language.
+3.  **Quarto**: A scientific publishing system (for creating reports).
+4.  **Positron**: A next-generation IDE for data science.
+
+---
+
+# Step 1: Install R
+
+<div class="step-box">
+<span class="step-number">1</span> **Download R**
+
+*   **Windows**: Download [R for Windows](https://cran.r-project.org/bin/windows/base/).
+*   **Mac**: Download [R for macOS](https://cran.r-project.org/bin/macosx/). (Choose the version matching your chip: Apple Silicon M1/M2/M3 or Intel).
+*   **Linux**: Install via your package manager (e.g., `sudo apt install r-base`).
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Install**
+
+Run the installer you downloaded. You can accept all default settings.
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Verify Installation**
+
+Open a terminal (Command Prompt on Windows, Terminal on Mac/Linux) and type:
+<code>R --version</code>
+
+You should see output showing the R version number (e.g., "R version 4.3.2").
+</div>
+
+---
+
+# Step 2: Install Python
+
+<div class="step-box">
+<span class="step-number">1</span> **Download Python**
+
+Go to [python.org/downloads](https://www.python.org/downloads/) and download the latest version (e.g., 3.12 or newer).
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Install**
+
+**Crucial Step for Windows Users**: When the installer opens, check the box that says **"Add python.exe to PATH"** before clicking "Install Now".
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Verify Installation**
+
+Open a terminal and type:
+<code>python --version</code> or <code>python3 --version</code>
+
+You should see output like "Python 3.12.0". If you get a "command not found" error on Windows, you may need to restart your computer for PATH changes to take effect.
+</div>
+
+---
+
+# Step 3: Install Quarto
+
+<div class="step-box">
+<span class="step-number">1</span> **Download Quarto**
+
+Go to [quarto.org/docs/get-started](https://quarto.org/docs/get-started/) and download the CLI (Command Line Interface) installer for your OS.
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Install**
+
+Run the installer. This will allow R and Python to communicate with the document rendering system.
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Verify Installation**
+
+Open a terminal and type:
+<code>quarto --version</code>
+
+You should see output showing the Quarto version (e.g., "1.4.554").
+</div>
+
+---
+
+# Step 4: Install Positron
+
+<div class="step-box">
+<span class="step-number">1</span> **Download Positron**
+
+Go to the [Positron GitHub Releases](https://github.com/posit-dev/positron/releases).
+Look for the `Assets` section of the latest release.
+
+*   **Windows**: `.msi` or `.exe` file.
+*   **Mac**: `.dmg` file.
+*   **Linux**: `.deb` or `.rpm` file.
+</div>
+
+<div class="step-box">
+<span class="step-number">2</span> **Install**
+
+Install Positron just like any other application on your system.
+</div>
+
+<div class="step-box">
+<span class="step-number">3</span> **Verify Installation**
+
+Launch Positron from your applications menu or desktop. You should see a welcome screen with options to create a new file or open a folder.
+</div>
+
+---
+
+# Step 5: Verify Installation
+
+Open **Positron**. You should see a welcome screen.
+
+<div class="tip">
+<strong>Success Check:</strong>
+Open the "Terminal" pane in Positron (at the bottom) and type:
+<code>quarto check</code>
+
+You should see output indicating that Quarto, R, and Python are all found and valid.
+</div>
+
+[Next Tutorial: Getting Started with Positron →](02_Positron_Basics.html)

@@ -1,0 +1,474 @@
+---
+title: "Tutorial 6: Virtual Environments for Python in Positron"
+subtitle: "Easy Package Management for Projects on Mac and Windows"
+date: last-modified
+format:
+  html:
+    embed-resources: true
+    theme: none
+    css: tutorial_style.css
+    toc: false
+    number-sections: true
+execute:
+  echo: true
+  eval: false
+  warning: false
+  message: false
+---
+
+## Introduction
+
+In this tutorial, you will learn how to create and manage **virtual environments** for Python projects in Positron. Virtual environments are isolated spaces where you can install specific package versions without affecting your system-wide Python installation. This is essential for reproducible research, collaboration, and avoiding version conflicts.
+
+<div class="note">
+### Prerequisite
+
+Before starting this tutorial, ensure you have:
+
+1.  Completed <a href="01_Setup_Installation.html">Tutorial 1: Setup & Installation</a>
+2.  Python installed on your system (version 3.8 or higher)
+3.  Positron installed and configured
+</div>
+
+You will learn how to:
+
+1.  **Understand** why virtual environments are crucial for data science projects
+2.  **Create** virtual environments using different tools (venv, conda, pipenv)
+3.  **Activate** and **deactivate** environments in Positron
+4.  **Install** packages within virtual environments
+5.  **Manage** environments across Mac and Windows systems
+6.  **Share** environment specifications for collaboration
+
+By the end, you will be able to maintain clean, reproducible Python setups for all your projects.
+
+---
+
+## Step 1: Why Virtual Environments?
+
+<div class="step-box">
+### <span class="step-number">1</span> The Problem: Package Conflicts
+
+Imagine you're working on two projects:
+
+*   **Project A** requires `pandas==1.5.0` and `numpy==1.23.0`
+*   **Project B** requires `pandas==2.0.0` and `numpy==1.24.0`
+
+If you install both versions globally, one will overwrite the other, breaking one project.
+
+**Solution:** Virtual environments create isolated spaces for each project.
+</div>
+
+<div class="step-box">
+### <span class="step-number">2</span> Benefits for Data Science Projects
+
+1.  **Reproducibility**: Colleagues can recreate your exact environment
+2.  **Isolation**: Experiment with new packages without breaking existing projects
+3.  **Cleanliness**: Easy to delete environments when projects are complete
+4.  **Collaboration**: Share environment files (requirements.txt, environment.yml)
+5.  **Version Control**: Track package versions alongside your code
+</div>
+
+<div class="step-box">
+### <span class="step-number">3</span> Common Virtual Environment Tools
+
+| Tool | Primary Use | Pros | Cons |
+|:-----------------------|:-----------------------|:-----------------------|:-----------------------|
+| **venv** | Built‑in Python (≥3.3) | Simple, no extra installation | Limited to Python packages |
+| **conda** | Cross‑platform package manager | Handles non‑Python dependencies | Larger environment size |
+| **pipenv** | Combines pip + virtualenv | Automatic dependency resolution | Additional tool to learn |
+
+For this tutorial, we'll focus on **venv** (built‑in) as it's simplest and sufficient for most projects.
+</div>
+
+---
+
+## Step 2: Creating Virtual Environments with venv
+
+<div class="step-box">
+### <span class="step-number">1</span> Check Python Installation
+
+First, ensure Python is installed and accessible from the terminal:
+
+```bash
+# Open Terminal (Mac) or Command Prompt/PowerShell (Windows)
+python --version
+# Should show Python 3.x.x
+```
+
+If Python isn't found, you may need to use `python3` on some systems:
+
+```bash
+python3 --version
+```
+
+**Note:** Throughout this tutorial, replace `python` with `python3` if needed.
+</div>
+
+<div class="step-box">
+### <span class="step-number">2</span> Create a Project Folder
+
+Organize your work in a dedicated project folder:
+
+```bash
+# Navigate to your preferred location
+cd ~/Documents  # Mac
+# or
+cd %USERPROFILE%\Documents  # Windows
+
+# Create project folder
+mkdir my_python_project
+cd my_python_project
+```
+</div>
+
+<div class="step-box">
+### <span class="step-number">3</span> Create a Virtual Environment
+
+Use the built‑in `venv` module to create an environment:
+
+```bash
+# Create environment named "venv" (common convention)
+python -m venv venv
+```
+
+This creates a `venv` folder containing:
+*   Python interpreter copy
+*   `pip` package manager
+*   Site‑packages directory (for installed packages)
+
+**Alternative names:** Use `.venv` (hidden folder) or `env` if you prefer.
+</div>
+
+<div class="step-box">
+### <span class="step-number">4</span> Environment Structure
+
+Your project folder should now look like:
+
+```
+my_python_project/
+├── venv/           # Virtual environment (do not edit manually)
+│   ├── bin/        # Mac/Linux: executables
+│   ├── Scripts/    # Windows: executables
+│   ├── lib/        # Installed packages
+│   └── pyvenv.cfg  # Configuration file
+└── (your code will go here)
+```
+
+**Important:** Never commit the `venv` folder to Git. Add it to `.gitignore`.
+</div>
+
+---
+
+## Step 3: Activating Virtual Environments
+
+Activation modifies your shell's PATH so `python` and `pip` commands use the environment's versions.
+
+<div class="step-box">
+### <span class="step-number">1</span> Activation Commands by System
+
+#### Mac/Linux (bash/zsh)
+
+```bash
+# In your project directory
+source venv/bin/activate
+```
+
+#### Windows (Command Prompt)
+
+```cmd
+venv\Scripts\activate.bat
+```
+
+#### Windows (PowerShell)
+
+```powershell
+venv\Scripts\Activate.ps1
+```
+
+If PowerShell shows an execution policy error, run as Administrator:
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+Then try activation again.
+</div>
+
+<div class="step-box">
+### <span class="step-number">2</span> Verify Activation
+
+After activation, your terminal prompt should show the environment name:
+
+```bash
+# Mac/Linux example
+(venv) user@computer my_python_project $
+```
+
+```cmd
+# Windows example
+(venv) C:\Users\user\Documents\my_python_project>
+```
+
+Check that Python points to the environment:
+
+```bash
+which python   # Mac/Linux: should show .../venv/bin/python
+where python   # Windows: should show ...\venv\Scripts\python.exe
+```
+</div>
+
+<div class="step-box">
+### <span class="step-number">3</span> Deactivating Environments
+
+To return to your system Python:
+
+```bash
+deactivate
+```
+
+The `(venv)` prefix disappears from your prompt.
+</div>
+
+---
+
+## Step 4: Installing Packages in Virtual Environments
+
+<div class="step-box">
+### <span class="step-number">1</span> Basic Package Installation
+
+With the environment activated, use `pip` to install packages:
+
+```bash
+# Install single package
+pip install pandas
+
+# Install specific version
+pip install numpy==1.24.0
+
+# Install multiple packages
+pip install matplotlib seaborn scikit-learn
+```
+
+Packages are installed to `venv/lib/python3.x/site-packages/`.
+</div>
+
+<div class="step-box">
+### <span class="step-number">2</span> Install from Requirements File
+
+For reproducibility, create a `requirements.txt` file:
+
+```txt
+# requirements.txt
+pandas==2.0.3
+numpy==1.24.3
+matplotlib==3.7.1
+scikit-learn==1.3.0
+jupyter==1.0.0
+```
+
+Install all packages at once:
+
+```bash
+pip install -r requirements.txt
+```
+</div>
+
+<div class="step-box">
+### <span class="step-number">3</span> Generate Requirements File
+
+To share your environment, export installed packages:
+
+```bash
+# Save all packages (including dependencies)
+pip freeze > requirements.txt
+
+# For production, you might want to exclude development packages
+pip freeze | grep -v "pkg-resources" > requirements.txt
+```
+
+**Best Practice:** Update `requirements.txt` whenever you add or update packages.
+</div>
+
+<div class="step-box">
+### <span class="step-number">4</span> Package Management Tips
+
+*   **Upgrade pip**: `python -m pip install --upgrade pip`
+*   **List installed packages**: `pip list`
+*   **Show package info**: `pip show pandas`
+*   **Uninstall packages**: `pip uninstall package_name`
+*   **Check for updates**: `pip list --outdated`
+</div>
+
+---
+
+## Step 5: Using Virtual Environments in Positron
+
+
+
+<div class="step-box">
+### <span class="step-number">3</span> Verify in Positron
+
+Create a new Python chunk in a .qmd file or Python script:
+
+```python
+import sys
+print(f"Python executable: {sys.executable}")
+print(f"Python version: {sys.version}")
+```
+
+The output should show your virtual environment's path.
+</div>
+
+<div class="step-box">
+### <span class="step-number">4</span> Install Packages from Positron
+
+You can install packages directly within Positron:
+
+1.  Open the **Terminal** pane (not Console)
+2.  Activate your environment if not already active
+3.  Use `pip install` as usual
+
+**Alternative:** Use the `reticulate` package in R chunks:
+
+````markdown
+```{{r}}
+library(reticulate)
+virtualenv_install("venv", "pandas")
+```
+````
+</div>
+
+---
+
+## Step 6: Alternative Environment Managers
+
+<div class="step-box">
+### <span class="step-number">1</span> Conda Environments
+
+Conda is useful when you need non‑Python dependencies (e.g., C libraries).
+
+```bash
+# Create environment
+conda create --name myenv python=3.9
+
+# Activate
+conda activate myenv
+
+# Install packages
+conda install pandas numpy matplotlib
+
+# Export environment
+conda env export > environment.yml
+
+# Create from file
+conda env create -f environment.yml
+```
+
+**Note:** Conda environments are larger but more comprehensive.
+</div>
+
+<div class="step-box">
+### <span class="step-number">2</span> Pipenv
+
+Pipenv combines pip and virtualenv with better dependency resolution.
+
+```bash
+# Install pipenv
+pip install pipenv
+
+# Create environment and install packages
+pipenv install pandas numpy
+
+# Activate
+pipenv shell
+
+# Generate lockfile
+pipenv lock
+```
+</div>
+
+<div class="step-box">
+### <span class="step-number">3</span> Poetry
+
+Poetry is modern dependency management with publishing capabilities.
+
+```bash
+# Install poetry
+curl -sSL https://install.python-poetry.org | python3 -
+
+# Create new project
+poetry new myproject
+
+# Add dependencies
+poetry add pandas numpy
+```
+</div>
+
+---
+
+## Step 7: Troubleshooting Common Issues
+
+<div class="step-box">
+### <span class="step-number">1</span> "Command not found" Errors
+
+**Problem:** `python` or `pip` not recognized after activation.
+
+**Solutions:**
+
+1.  **Check activation:** Ensure `(venv)` appears in prompt
+2.  **Verify paths:** `which python` (Mac) or `where python` (Windows)
+3.  **Recreate environment:** Delete `venv` folder and run `python -m venv venv` again
+4.  **System PATH issues:** Ensure Python is in your system PATH
+</div>
+
+<div class="step-box">
+### <span class="step-number">2</span> Permission Errors (Mac/Linux)
+
+**Problem:** "Permission denied" when installing packages.
+
+**Solutions:**
+
+1.  **Never use sudo:** Don't install packages with `sudo pip install`
+2.  **Check ownership:** `ls -la venv` – you should own the folder
+3.  **Fix permissions:** `chmod -R u+w venv`
+4.  **Recreate with correct user:** Ensure you're not root when creating
+</div>
+
+<div class="step-box">
+### <span class="step-number">3</span> PowerShell Execution Policy (Windows)
+
+**Problem:** "Cannot load file ... execution of scripts is disabled"
+
+**Solutions:**
+
+```powershell
+# Check current policy
+Get-ExecutionPolicy
+
+# Set policy for current user (requires Administrator)
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Or run activation script without policy change
+.\venv\Scripts\Activate.ps1 -ExecutionPolicy Bypass
+```
+</div>
+
+<div class="step-box">
+### <span class="step-number">4</span> Environment Not Working in Positron
+
+**Problem:** Positron uses system Python instead of virtual environment.
+
+**Solutions:**
+
+1.  **Restart Positron:** After creating/activating environment
+2.  **Manual selection:** Choose Python interpreter in top-right corner
+3.  **Check .Rprofile:** Ensure no `RETICULATE_PYTHON` override
+4.  **Use reticulate:** Explicitly set Python path in R:
+
+    ```r
+    library(reticulate)
+    use_virtualenv("venv")
+    ```
+</div>
+
+---

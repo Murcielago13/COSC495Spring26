@@ -1,0 +1,245 @@
+---
+title: "Lecture 3: Advanced Exploratory Data Analysis (STUDENT)"
+subtitle: "Multivariate Techniques and Interactive Visualization"
+author: "MATH/COSC 495 Consulting Course"
+date: "2026-01-25"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    smooth-scroll: true
+    code-fold: true
+    code-summary: "Show code"
+    code-copy: true
+    code-tools: true
+    fig-cap-location: bottom
+    fig-alt: true
+    fig-responsive: true
+    self-contained: true
+    html-math-method: mathml
+    theme:
+      - cosmo
+      - lumen
+      - materia
+      - minty
+    css: ../accessibility.css
+execute:
+  warning: false
+  message: false
+  echo: true
+editor: source
+accessibility:
+  html-lang: "en"
+  skip-link: true
+  semantic-headings: true
+  aria-label-images: true
+  aria-label-tables: true
+  aria-description-figures: true
+---
+
+```{r setup, include=FALSE}
+# Load required libraries
+library(tidyverse)
+library(lubridate)
+library(knitr)
+library(kableExtra)
+library(here)
+library(corrplot)
+library(ggridges)
+library(patchwork)
+library(GGally)
+library(factoextra)
+library(cluster)
+library(plotly)
+library(DT)
+
+# Load cleaned data
+# Note: Ensure you have the cleaned data file in the correct directory
+cleaned_data <- read_csv("../data/processed/Final_Cleaned_Litter_Survey.csv",
+                         show_col_types = FALSE)
+
+# Convert factors for analysis
+cleaned_data <- cleaned_data %>%
+  mutate(
+    across(c(season, moisture_level, paw_score_level, breed, bird_type), as.factor),
+    moisture_percent_num = as.numeric(moisture_percent_num),
+    paw_score_num = as.numeric(paw_score_num),
+    caked_litter_num = as.numeric(caked_litter_num),
+    survey_date = as.Date(survey_date),
+    first_date_placed = as.Date(first_date_placed),
+    last_date_sold = as.Date(last_date_sold)
+  )
+
+# Set seed for reproducibility
+set.seed(4952026)
+```
+
+# Introduction
+
+## Building on Foundational EDA
+
+In **Lecture 2**, we explored basic statistical relationships and built preliminary models. Now, we'll leverage **advanced exploratory data analysis (EDA)** techniques to uncover deeper patterns, identify subgroups, and prepare for sophisticated modeling.
+
+### Learning Objectives
+
+By the end of this lecture, you will be able to:
+
+1.  **Conduct** multivariate exploratory analysis using correlation networks
+2.  **Implement** dimensionality reduction with Principal Component Analysis (PCA)
+3.  **Perform** cluster analysis to identify natural subgroups in the data
+4.  **Analyze** temporal patterns and seasonal effects
+5.  **Create** interactive visualizations for exploratory data analysis
+
+# Multivariate Exploration
+
+## Activity 1: Correlation Network Analysis
+
+In Lecture 2, we looked at a simple correlation matrix. Now, let's look at the "connectedness" of our variables. 
+
+**Task**: Create a visualization that shows how management variables (moisture, paw score, caked litter) cluster relative to performance variables (FCR, livability, weight).
+
+```{r activity-1}
+#| label: correlation-network
+#| fig-cap: "Correlation Network of Key Variables"
+
+# TODO: Select your variables and compute a correlation matrix.
+# Hint: Use corrplot() with order = 'hclust' to see the network structure.
+
+```
+
+**Guided Questions**:
+
+1. Do the management indicators (Moisture, Paw Score, Caked Litter) cluster together as a single "Management Quality" dimension?
+2. Which performance variable is most strongly linked to litter moisture?
+3. Are there any biological factors (Age, Weight) that seem to "bridge" these two clusters?
+
+---
+
+## Activity 2: Principal Component Analysis (PCA)
+
+PCA allows us to condense multiple variables into a few "Principal Components" that capture the most variance.
+
+**Task**: Perform a PCA on the key numeric variables and visualize the variance explained using a Scree Plot.
+
+```{r activity-2}
+#| label: pca-analysis
+
+# TODO: Prepare data (scale it!), run prcomp(), and create a scree plot.
+# Hint: Use fviz_eig() from the factoextra package.
+
+```
+
+**Task**: Create a PCA Biplot.
+
+```{r activity-2-biplot}
+#| label: pca-biplot
+
+# TODO: Use fviz_pca_biplot() to see how variables and observations map to PCs.
+
+```
+
+**Guided Questions**:
+
+1. How many components are needed to explain at least 70% of the variance in the dataset?
+2. Look at the loadings (vectors) in the biplot. What does PC1 represent in "real world" terms? (e.g., is it a "size" dimension or a "quality" dimension?)
+3. If you color the points by **Season**, do you see any separation? What does this tell you about the consistency of management across the year?
+
+---
+
+# Cluster Analysis: Farm Segmentation
+
+## Activity 3: Identifying Natural Subgroups
+
+Can we identify distinct "types" of production environments without using predefined labels?
+
+**Task**: Use the "Elbow Method" or "Silhouette Method" to determine the optimal number of clusters for our data.
+
+```{r activity-3-optimal-k}
+#| label: optimal-k
+
+# TODO: Use fviz_nbclust() to find the best k for K-means.
+
+```
+
+**Task**: Perform K-means clustering with your chosen $k$ and calculate the average profile for each cluster.
+
+```{r activity-3-kmeans}
+#| label: kmeans-clustering
+
+# TODO: Run kmeans(), add the cluster IDs back to your dataframe, 
+# and summarize the metrics (mean FCR, mean Moisture, etc.) by cluster.
+
+```
+
+**Guided Questions**:
+
+1. Describe your clusters. If you had to give them logical names (e.g., "The Top Performers", "The Strugglers"), what would they be?
+2. Which cluster has the highest moisture variability?
+3. How many farms fall into the "Challenged" category, and what is their average FCR compared to the rest?
+
+---
+
+# Temporal Dynamics
+
+## Activity 4: Production Cycle Patterns
+
+Production metrics change as birds grow. We need to understand the "lifespan" of a flock.
+
+**Task**: Plot the average Moisture and FCR across the `days_in_production` (Survey Date - Placement Date).
+
+```{r activity-4}
+#| label: cycle-patterns
+
+# TODO: Calculate days_in_production, group by day, and plot trends.
+
+```
+
+**Guided Questions**:
+
+1. At what day does litter moisture typically cross the "danger zone" (>30%)?
+2. Is there a lag between the rise in moisture and the deterioration of paw scores?
+3. How does FCR behave in the final 10 days before sale?
+
+---
+
+# Cross-Farm Comparison & Benchmarking
+
+## Activity 5: What Makes a Top Performer?
+
+**Task**: Rank the farms based on a composite Performance Index (you decide the weights for FCR, Paw Score, and Livability). Compare the top 10% vs the bottom 10%.
+
+```{r activity-5}
+#| label: benchmarking
+
+# TODO: Group by farm_no, calculate metrics, and compare groups.
+
+```
+
+**Guided Questions**:
+
+1. Does the "Top 10" group distinguish itself more by its *average* performance or its *consistency* (lower standard deviation)?
+2. If you could only give one piece of advice to the "Bottom 10" farms, what would it be based on this data?
+
+---
+
+# Python Challenge (Optional)
+
+If you are a Python user, replicate the **Correlation Heatmap** and **PCA Biplot** using `pandas`, `seaborn`, and `sklearn.decomposition`.
+
+```{python}
+#| label: python-challenge
+#| eval: false
+
+# TODO: Implement your production-level EDA here.
+```
+
+---
+
+# Summary and Deliverable
+
+Based on your findings in this advanced EDA:
+1. Identify the **threshold** where moisture management becomes "critical."
+2. Propose a **farm segmentation strategy** for technical advisors.
+3. Prepare a brief 3-slide summary of your "New Insights" that weren't obvious from the basic EDA in Lecture 2.

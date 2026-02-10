@@ -1,0 +1,834 @@
+---
+title: "Lecture 1: Data Management and Cleaning Fundamentals"
+subtitle: "Poultry Litter Management"
+author: "MATH/COSC 495 Consulting Course"
+date: "2026-01-25"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
+    smooth-scroll: true
+    code-fold: true
+    code-summary: "Show code"
+    code-copy: true
+    code-tools: true
+    fig-cap-location: bottom
+    fig-alt: true
+    fig-responsive: true
+    embed-resources: true
+    html-math-method: mathml
+    theme:
+      - cosmo
+      - lumen
+      - materia
+      - minty
+    css: accessibility.css
+execute:
+  warning: false
+  message: false
+  echo: false
+editor: visual
+accessibility:
+  html-lang: "en"
+  skip-link: true
+  semantic-headings: true
+  aria-label-images: true
+  aria-label-tables: true
+  aria-description-figures: true
+---
+
+```{r setup, include=FALSE}
+# Load required libraries
+library(tidyverse)
+library(lubridate)
+library(knitr)
+library(kableExtra)
+library(here)
+
+# Set seed for reproducibility
+set.seed(4952026)
+```
+
+# Introduction
+
+## Welcome to Data Management Fundamentals
+
+Welcome to the first lecture in our poultry litter management case study series. This session focuses on **data management and cleaning fundamentals**, the critical foundation upon which all meaningful analysis is built.
+
+### Learning Objectives
+
+By the end of this lecture, you will be able to:
+
+1.  **Understand** the structure and variables in the poultry litter survey dataset
+2.  **Implement** a reproducible data cleaning workflow in both R and Python
+3.  **Handle** common data quality issues including composite categories and missing values
+4.  **Create** derived variables for enhanced analytical power
+5.  **Validate** data cleaning processes to ensure accuracy
+
+### Case Study Context
+
+The poultry industry represents a critical component of global food security, with broiler chicken production alone projected to surpass USD 420 billion by 2030. Within this massive industry, **feed conversion efficiency** stands as the single most important determinant of profitability, representing 40-70% of total production costs.
+
+**Litter management** has emerged as a critical control point influencing:
+
+-   **Economic performance** (feed conversion ratios)
+-   **Animal welfare** (footpad dermatitis scores)
+-   **Environmental impact** (ammonia production)
+
+Our dataset contains detailed flock-level records from integrated poultry production operations, providing a rich opportunity to explore these interconnected dimensions.
+
+## Dataset Overview
+
+### Source and Collection Methods
+
+The poultry litter survey data was collected through a standardized assessment protocol administered by technical advisors across multiple commercial operations. Data collection features:
+
+-   **Temporal coverage**: Multiple production cycles across different seasons
+-   **Geographic scope**: Commercial operations across various climate zones
+-   **Scale**: Thousands of individual flock records with complete performance metrics
+-   **Completeness**: Comprehensive tracking from chick placement through final processing
+
+### Variable Taxonomy
+
+The dataset contains 77 original columns organized into logical categories:
+
+```{r variable-overview, echo=FALSE}
+# Create a summary table of variable categories
+var_categories <- tribble(
+  ~Category, ~Variables, ~Description,
+  "Farm & Survey ID", "FLOCK_ENTITY, SURVEY_DATE, SURVEYNAME, FARMNO, ENTITYNO", "Unique identifiers and temporal data",
+  "Litter Management", "MOISTURE_PERCENT, CAKED_LITTER, PAW_SCORE, LITTER_CONDITION", "Litter quality assessments and management practices",
+  "Bird Performance", "FEED_CONVERSION, AVG_WEIGHT, LIVABILITY, ONE_WEEK_MORTALITY", "Key performance metrics and outcomes",
+  "Bird Characteristics", "BREED, BIRD_TYPE, AGE, HEN_AGE", "Bird genetics and demographic information",
+  "Operational Logistics", "FIRSTDATEPLACED, LASTDATESOLD, SEASON, FEED_CONSUMED", "Production timing and resource utilization"
+)
+
+knitr::kable(var_categories, caption = "Dataset Variable Categories") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, position = "center") %>%
+  column_spec(1, bold = TRUE)
+```
+
+### Detailed Variable Descriptions
+
+The cleaned dataset contains the following variables with their descriptions:
+
+| Category | Variable Name | Data Type | Description |
+|:-----------------|:-----------------|:-----------------|:-----------------|
+| **Farm & Survey ID** | `FLOCK_ENTITY` (flock_id) | String | Unique identifier for a specific flock within a house, combining farm and entity numbers. |
+|  | `SURVEY_DATE` (survey_date) | DateTime | Date and time the litter survey was conducted. |
+|  | `FARMNO` (farm_no) | String | Internal system ID for the farm. |
+|  | `ENTITYNO` (house_no) | String | Number for the specific poultry house/barn. |
+| **Litter Management** | `FIRSTDATEPLACED` (first_date_placed) | DateTime | Date when the flock was placed in the house. |
+|  | `LASTDATESOLD` (last_date_sold) | DateTime | Date when the flock was sold/removed. |
+|  | `SEASON` (season) | String | The production season during which the flock was raised. |
+|  | `CARBON_ADD_BACKS` (carbon_add_backs) | Categorical | Practice of adding fresh carbon-based bedding. Value indicates compliance. |
+|  | `CAKED_LITTER` (caked_litter) | Categorical | Estimated percentage of the house floor covered with wet, compacted litter. |
+|  | `PULLED_CAKE_FROM_HOUSE` (pulled_cake_from_house) | Boolean | Indicates if caked litter was actively removed before this survey. |
+|  | `HOUSE_CLEAN_OUT` (house_clean_out) | Categorical | Time elapsed since a complete removal and replacement of all litter. |
+|  | `LITTER_CONDITION` (litter_condition) | Categorical | Overall qualitative assessment of litter quality. |
+|  | `LITTER_DEPTH` (litter_depth) | Categorical | Depth of the loose litter base. |
+|  | `MOISTURE_PERCENT` (moisture_percent) | Categorical | **Critical Metric:** Litter moisture range. Higher moisture promotes pathogens. |
+|  | `PAW_SCORE` (paw_score) | Categorical | Assessment of footpad health (pododermatitis), a key welfare indicator linked to wet litter. |
+|  | `PROPER_WINDROWING` (proper_windrowing) | Categorical | Indicates if litter was piled into rows between flocks to compost and reduce pathogens. |
+|  | `LITTER_INTERVENTION` (litter_intervention) | Categorical | Indicates the level of corrective action taken to manage litter conditions. |
+| **Bird Performance** | `AVG_WEIGHT` (avg_weight) | Numeric | Average bird weight (likely in pounds) at sale/assessment. |
+|  | `FEED_CONVERSION` (feed_conversion) | Numeric | **Key Metric:** Feed Conversion Ratio (FCR) - feed consumed per unit of weight gained. |
+|  | `LIVABILITY` (livability) | Numeric | Percentage of placed birds that survived (`HEAD_SOLD / HEAD_PLACED * 100`). |
+|  | `ONE_WEEK_MORTALITY` (one_week_mortality) | Numeric | Mortality rate percentage in the first week. |
+|  | `WEIGHT_GAIN_PER_DAY` (weight_gain_per_day) | Numeric | Average daily gain (ADG) in weight per bird. |
+|  | `AGE` (age_days) | Numeric | Flock age in days. |
+|  | `HEAD_PLACED` (head_placed) | Numeric | Number of birds started. |
+|  | `HEAD_SOLD` (head_sold) | Numeric | Number of birds sold/marketed. |
+|  | `FEED_CONSUMED` (feed_consumed) | Numeric | Total amount of feed consumed by the flock. |
+|  | `GOAL_WEIGHT` (goal_weight) | Numeric | Target average bird weight for this flock. |
+| **Bird Characteristics** | `BREED` (breed) | String | Simplified breed code of the birds. |
+|  | `BIRD_TYPE` (bird_type) | String | Code for bird type (e.g., "Turkey Pullet"). |
+|  | `HEN_AGE` (hen_age_weeks) | Numeric | Age of the parent flock (in weeks). |
+
+*Note: The cleaned dataset also includes derived variables created during the cleaning process (e.g., `moisture_percent_num`, `paw_score_num`, `moisture_level`, `feed_efficiency`, etc.) that are not included in this table as they were created from the original variables listed above.*
+
+### Key Variables for Analysis
+
+For our focused analysis, we'll concentrate on these critical variables:
+
+```{r key-variables, echo=FALSE}
+key_vars <- tribble(
+  ~Variable, ~Type, ~Description, ~`Analytical Importance`,
+  "FEED_CONVERSION", "Numeric", "Feed consumed per unit weight gained", "Primary outcome measure",
+  "MOISTURE_PERCENT", "Categorical → Numeric", "Litter moisture content range", "Primary predictor variable",
+  "PAW_SCORE", "Categorical → Numeric", "Footpad health assessment", "Welfare-performance indicator",
+  "CAKED_LITTER", "Categorical → Numeric", "Percentage of caked litter", "Management practice indicator",
+  "SEASON", "Categorical", "Production season", "Environmental control variable",
+  "AGE", "Numeric", "Bird age in days", "Biological control variable"
+)
+
+kable(key_vars, caption = "Key Variables for Analysis") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE, position = "center") %>%
+  column_spec(1, width = "15%") %>%
+  column_spec(4, width = "30%")
+```
+
+## Data Cleaning Workflow
+
+### The Data Cleaning Pipeline
+
+Effective data cleaning follows a systematic pipeline. We'll implement this pipeline using **both R and Python** to demonstrate language-agnostic principles:
+
+```{mermaid, echo=FALSE}
+flowchart TD
+    A[Raw Data<br>77 columns] --> B[Column Selection<br>Focus on key variables]
+    B --> C[Type Conversion<br>Dates, booleans, factors]
+    C --> D[Handle Composite Categories<br>Split multi-selections]
+    D --> E[Create Numeric Versions<br>Midpoints of ranges]
+    E --> F[Derived Metrics<br>Calculated performance indicators]
+    F --> G[Validation<br>Quality checks]
+    G --> H[Cleaned Data<br>44 columns]
+
+    style A fill:#e1f5fe
+    style H fill:#e8f5e8
+```
+
+### Step 1: Load Raw Data
+
+First, we load the raw survey data. Both R and Python use similar approaches:
+
+::: panel-tabset
+#### R (tidyverse)
+
+```{r load-r, eval=FALSE, echo=TRUE}
+library(tidyverse)
+library(lubridate)
+
+# Load raw data
+raw_data_path <- "MATH495_Spring26_ConsultingCourse/data/raw/Final_Litter_Survey.csv"
+raw_data <- read_csv(raw_data_path, show_col_types = FALSE)
+
+cat("Raw data dimensions:", dim(raw_data), "\n")
+# Output: Raw data dimensions: 2528 77
+```
+
+#### Python (pandas)
+
+```{python load-python, eval=FALSE, echo=TRUE}
+import pandas as pd
+import numpy as np
+
+# Load raw data
+raw_data_path = "MATH495_Spring26_ConsultingCourse/data/raw/Final_Litter_Survey.csv"
+raw_data = pd.read_csv(raw_data_path)
+
+print(f"Raw data shape: {raw_data.shape}")
+# Output: Raw data shape: (2528, 77)
+```
+:::
+
+**Result**: We have 2,528 survey responses with 77 columns.
+
+### Step 2: Select Relevant Columns
+
+The raw data contains many columns not needed for our analysis. We select only the variables relevant to litter management and bird performance:
+
+::: panel-tabset
+#### R (tidyverse)
+
+```{r select-r, eval=FALSE, echo=TRUE}
+selected_data <- raw_data %>%
+  select(
+    # Identifiers
+    flock_id = FLOCK_ENTITY,
+    farm_no = FARMNO,
+    house_no = ENTITYNO,
+
+    # Temporal data
+    survey_date = SURVEY_DATE,
+    season = SEASON,
+    first_date_placed = FIRSTDATEPLACED,
+    last_date_sold = LASTDATESOLD,
+
+    # Litter management (categorical)
+    carbon_add_backs = CARBON_ADD_BACKS,
+    caked_litter = CAKED_LITTER,
+    pulled_cake_from_house = PULLED_CAKE_FROM_HOUSE,
+    house_clean_out = HOUSE_CLEAN_OUT,
+    litter_condition = LITTER_CONDITION,
+    litter_depth = LITTER_DEPTH,
+    moisture_percent = MOISTURE_PERCENT,
+    paw_score = PAW_SCORE,
+    proper_windrowing = PROPER_WINDROWING,
+    litter_intervention = LITTER_INTERVENTION,
+
+    # Bird performance (numeric)
+    avg_weight = AVG_WEIGHT,
+    feed_conversion = FEED_CONVERSION,
+    livability = LIVABILITY,
+    one_week_mortality = ONE_WEEK_MORTALITY,
+    weight_gain_per_day = WEIGHT_GAIN_PER_DAY,
+    age_days = AGE,
+    head_placed = HEAD_PLACED,
+    head_sold = HEAD_SOLD,
+    feed_consumed = FEED_CONSUMED,
+    goal_weight = GOAL_WEIGHT,
+
+    # Bird characteristics
+    breed = BREED,
+    bird_type = BIRD_TYPE,
+    hen_age_weeks = HEN_AGE
+  )
+```
+
+#### Python (pandas)
+
+```{python select-python, eval=FALSE, echo=TRUE}
+# Define column mapping
+column_mapping = {
+    'FLOCK_ENTITY': 'flock_id',
+    'FARMNO': 'farm_no',
+    'ENTITYNO': 'house_no',
+    'SURVEY_DATE': 'survey_date',
+    'SEASON': 'season',
+    'FIRSTDATEPLACED': 'first_date_placed',
+    'LASTDATESOLD': 'last_date_sold',
+    'CARBON_ADD_BACKS': 'carbon_add_backs',
+    'CAKED_LITTER': 'caked_litter',
+    'PULLED_CAKE_FROM_HOUSE': 'pulled_cake_from_house',
+    'HOUSE_CLEAN_OUT': 'house_clean_out',
+    'LITTER_CONDITION': 'litter_condition',
+    'LITTER_DEPTH': 'litter_depth',
+    'MOISTURE_PERCENT': 'moisture_percent',
+    'PAW_SCORE': 'paw_score',
+    'PROPER_WINDROWING': 'proper_windrowing',
+    'LITTER_INTERVENTION': 'litter_intervention',
+    'AVG_WEIGHT': 'avg_weight',
+    'FEED_CONVERSION': 'feed_conversion',
+    'LIVABILITY': 'livability',
+    'ONE_WEEK_MORTALITY': 'one_week_mortality',
+    'WEIGHT_GAIN_PER_DAY': 'weight_gain_per_day',
+    'AGE': 'age_days',
+    'HEAD_PLACED': 'head_placed',
+    'HEAD_SOLD': 'head_sold',
+    'FEED_CONSUMED': 'feed_consumed',
+    'GOAL_WEIGHT': 'goal_weight',
+    'BREED': 'breed',
+    'BIRD_TYPE': 'bird_type',
+    'HEN_AGE': 'hen_age_weeks'
+}
+
+selected_data = raw_data[list(column_mapping.keys())].copy()
+selected_data = selected_data.rename(columns=column_mapping)
+```
+:::
+
+**Result**: We now have 30 columns focused on litter management and bird performance.
+
+### Step 3: Convert Data Types
+
+Raw data often comes with incorrect types. We need to convert: 1. Date strings to proper Date types 2. Boolean strings ("true"/"false") to logical TRUE/FALSE 3. Categorical variables to factors/categories 4. Ensure numeric variables are properly typed
+
+::: panel-tabset
+#### R (tidyverse)
+
+```{r convert-r, eval=FALSE, echo=TRUE}
+cleaned_data <- selected_data %>%
+  mutate(
+    # Convert dates
+    survey_date = as.Date(survey_date, format = "%Y-%m-%d"),
+    first_date_placed = as.Date(first_date_placed, format = "%Y-%m-%d"),
+    last_date_sold = as.Date(last_date_sold, format = "%Y-%m-%d"),
+
+    # Convert boolean (handle "true"/"false" strings)
+    pulled_cake_from_house = case_when(
+      pulled_cake_from_house == "true" ~ TRUE,
+      pulled_cake_from_house == "false" ~ FALSE,
+      is.na(pulled_cake_from_house) ~ NA,
+      TRUE ~ as.logical(pulled_cake_from_house)
+    ),
+
+    # Convert categorical columns to factors
+    across(c(season, carbon_add_backs, caked_litter, house_clean_out,
+             litter_condition, litter_depth, moisture_percent, paw_score,
+             proper_windrowing, litter_intervention, breed, bird_type),
+           as.factor),
+
+    # Ensure numeric columns are numeric
+    across(c(avg_weight, feed_conversion, livability, one_week_mortality,
+             weight_gain_per_day, age_days, head_placed, head_sold,
+             feed_consumed, goal_weight, hen_age_weeks),
+           as.numeric)
+  )
+```
+
+#### Python (pandas)
+
+```{python convert-python, eval=FALSE, echo=TRUE}
+def convert_data_types(df):
+    df = df.copy()
+
+    # Convert dates (equivalent to as.Date in R)
+    for col in ['survey_date', 'first_date_placed', 'last_date_sold']:
+        df[col] = pd.to_datetime(df[col], errors='coerce').dt.date
+
+    # Convert boolean (equivalent to case_when in R)
+    df['pulled_cake_from_house'] = df['pulled_cake_from_house'].map({
+        'true': True,
+        'false': False,
+    })
+
+    # Convert categorical columns to category type (equivalent to as.factor)
+    categorical_cols = ['season', 'carbon_add_backs', 'caked_litter',
+                       'house_clean_out', 'litter_condition', 'litter_depth',
+                       'moisture_percent', 'paw_score', 'proper_windrowing',
+                       'litter_intervention', 'breed', 'bird_type']
+
+    for col in categorical_cols:
+        if col in df.columns:
+            df[col] = df[col].astype('category')
+
+    # Ensure numeric columns are numeric (equivalent to as.numeric)
+    numeric_cols = ['avg_weight', 'feed_conversion', 'livability',
+                   'one_week_mortality', 'weight_gain_per_day', 'age_days',
+                   'head_placed', 'head_sold', 'feed_consumed',
+                   'goal_weight', 'hen_age_weeks']
+
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    return df
+
+cleaned_data = convert_data_types(selected_data)
+```
+:::
+
+**Key Insight**: Proper data typing is crucial. Dates should be Date objects, not strings, and categorical variables should be factors/categories, not character strings.
+
+### Step 4: Handle Composite Categories
+
+The survey allowed multiple selections for some questions, creating **composite categories** like: - "Less than 30% moisture, 31-40% moisture" (two moisture ranges) - "Good paws, Acceptable paws" (two paw quality ratings)
+
+This creates a problem for analysis. We'll extract the **first category** and flag composite responses:
+
+::: panel-tabset
+#### R (tidyverse)
+
+```{r composite-r, eval=FALSE, echo=TRUE}
+cleaned_data <- cleaned_data %>%
+  mutate(
+    # Extract first category before comma
+    moisture_percent_single = str_split(moisture_percent, ",", simplify = TRUE)[,1],
+    paw_score_single = str_split(paw_score, ",", simplify = TRUE)[,1],
+    caked_litter_single = str_split(caked_litter, ",", simplify = TRUE)[,1],
+
+    # Flag composite categories
+    moisture_composite = str_detect(moisture_percent, ","),
+    paw_score_composite = str_detect(paw_score, ","),
+    caked_litter_composite = str_detect(caked_litter, ",")
+  )
+
+# Check frequency of composites
+table(cleaned_data$moisture_composite)
+```
+
+#### Python (pandas)
+
+```{python composite-python, eval=FALSE, echo=TRUE}
+# Split composite categories and extract first one
+cleaned_data['moisture_percent_single'] = cleaned_data['moisture_percent'].str.split(',').str[0]
+cleaned_data['paw_score_single'] = cleaned_data['paw_score'].str.split(',').str[0]
+cleaned_data['caked_litter_single'] = cleaned_data['caked_litter'].str.split(',').str[0]
+
+# Flag composite categories
+cleaned_data['moisture_composite'] = cleaned_data['moisture_percent'].str.contains(',')
+cleaned_data['paw_score_composite'] = cleaned_data['paw_score'].str.contains(',')
+cleaned_data['caked_litter_composite'] = cleaned_data['caked_litter'].str.contains(',')
+
+# Check frequency of composites
+print(cleaned_data['moisture_composite'].value_counts())
+```
+:::
+
+**Result**:
+
+-   207 responses (8.2%) have composite moisture categories
+-   49 responses (1.9%) have composite paw scores
+-   133 responses (5.3%) have composite caked litter assessments
+
+**Business Implication**: We can either analyze these separately or exclude them, depending on research questions.
+
+### Step 5: Create Numeric Versions of Categories
+
+For statistical analysis, we need numeric versions of our categorical ranges. We compute the **midpoint** of each range:
+
+```{r mapping-table, echo=FALSE}
+mapping_table <- tribble(
+  ~Variable, ~Category, ~Midpoint, ~Rationale,
+  "Moisture", "Less than 30%", 15, "Conservative estimate",
+  "Moisture", "31-40%", 35.5, "Midpoint of range",
+  "Moisture", "Greater than 40%", 45.5, "Conservative estimate",
+  "Paw Score", "<50% acceptable", 25, "Low quality",
+  "Paw Score", "50-80% acceptable", 65, "Moderate quality",
+  "Paw Score", ">80% acceptable", 90, "High quality",
+  "Caked Litter", "<10% caked", 5, "Very little caking",
+  "Caked Litter", "11-49% caked", 30, "Moderate caking",
+  "Caked Litter", ">50% caked", 75, "Severe caking"
+)
+
+kable(mapping_table, caption = "Categorical to Numeric Mapping Strategy") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"),
+                full_width = FALSE, position = "center") %>%
+  column_spec(1, bold = TRUE)
+```
+
+::: panel-tabset
+#### R (tidyverse)
+
+```{r numeric-r, eval=FALSE, echo=TRUE}
+cleaned_data <- cleaned_data %>%
+  mutate(
+    # Extract numeric midpoints using case_when
+    moisture_percent_num = case_when(
+      str_detect(moisture_percent_single, "Less than 30 % moisture") ~ 15,
+      str_detect(moisture_percent_single, "31 – 40 % moisture") ~ 35.5,
+      str_detect(moisture_percent_single, "Greater than 40 % moisture") ~ 45.5,
+      TRUE ~ NA_real_
+    ),
+
+    paw_score_num = case_when(
+      str_detect(paw_score_single, "Less than 50 % acceptable paws") ~ 25,
+      str_detect(paw_score_single, "50 – 80 % acceptable paws") ~ 65,
+      str_detect(paw_score_single, "Greater than 80 % acceptable paws") ~ 90,
+      TRUE ~ NA_real_
+    ),
+
+    caked_litter_num = case_when(
+      str_detect(caked_litter_single, "Less than 10 % caked") ~ 5,
+      str_detect(caked_litter_single, "11 – 49 % caked") ~ 30,
+      str_detect(caked_litter_single, "Greater than 50 % of area caked") ~ 75,
+      TRUE ~ NA_real_
+    )
+  )
+```
+
+#### Python (pandas)
+
+```{python numeric-python, eval=FALSE, echo=TRUE}
+def create_moisture_numeric(series):
+    conditions = [
+        series.str.contains('Less than 30 % moisture', na=False),
+        series.str.contains('31 – 40 % moisture', na=False),
+        series.str.contains('Greater than 40 % moisture', na=False)
+    ]
+    choices = [15, 35.5, 45.5]
+    return np.select(conditions, choices, default=np.nan)
+
+def create_paw_score_numeric(series):
+    conditions = [
+        series.str.contains('Less than 50 % acceptable paws', na=False),
+        series.str.contains('50 – 80 % acceptable paws', na=False),
+        series.str.contains('Greater than 80 % acceptable paws', na=False)
+    ]
+    choices = [25, 65, 90]
+    return np.select(conditions, choices, default=np.nan)
+
+def create_caked_litter_numeric(series):
+    conditions = [
+        series.str.contains('Less than 10 % caked', na=False),
+        series.str.contains('11 – 49 % caked', na=False),
+        series.str.contains('Greater than 50 % of area caked', na=False)
+    ]
+    choices = [5, 30, 75]
+    return np.select(conditions, choices, default=np.nan)
+
+# Apply transformations
+cleaned_data['moisture_percent_num'] = create_moisture_numeric(
+    cleaned_data['moisture_percent_single'])
+cleaned_data['paw_score_num'] = create_paw_score_numeric(
+    cleaned_data['paw_score_single'])
+cleaned_data['caked_litter_num'] = create_caked_litter_numeric(
+    cleaned_data['caked_litter_single'])
+```
+:::
+
+**Key Insight**: Converting categorical ranges to numeric values enables regression analysis and correlation studies.
+
+### Step 6: Create Derived Metrics
+
+Create calculated fields that provide additional analytical power:
+
+::: panel-tabset
+#### R (tidyverse)
+
+```{r derived-r, eval=FALSE, echo=TRUE}
+cleaned_data <- cleaned_data %>%
+  mutate(
+    # Create performance levels
+    moisture_level = case_when(
+      moisture_percent_num <= 25 ~ "Low",
+      moisture_percent_num <= 35 ~ "Medium",
+      moisture_percent_num > 35 ~ "High",
+      TRUE ~ "Unknown"
+    ),
+
+    paw_score_level = case_when(
+      paw_score_num < 50 ~ "Poor",
+      paw_score_num >= 50 & paw_score_num <= 80 ~ "Acceptable",
+      paw_score_num > 80 ~ "Good",
+      TRUE ~ "Unknown"
+    ),
+
+    # Calculate derived metrics
+    mortality_rate = (head_placed - head_sold) / head_placed * 100,
+    feed_efficiency = 1 / feed_conversion,  # Weight gained per unit feed
+    production_days = as.numeric(last_date_sold - first_date_placed)
+  ) %>%
+  mutate(
+    across(c(moisture_level, paw_score_level), as.factor)
+  )
+```
+
+#### Python (pandas)
+
+```{python derived-python, eval=FALSE, echo=TRUE}
+# Create performance levels
+conditions = [
+    cleaned_data['moisture_percent_num'] <= 25,
+    (cleaned_data['moisture_percent_num'] > 25) &
+    (cleaned_data['moisture_percent_num'] <= 35),
+    cleaned_data['moisture_percent_num'] > 35
+]
+choices = ['Low', 'Medium', 'High']
+cleaned_data['moisture_level'] = np.select(conditions, choices, default='Unknown')
+
+# Paw score level
+def create_paw_score_level(row):
+    score = row['paw_score_num']
+    if pd.isna(score):
+        return 'Unknown'
+    elif score < 50:
+        return 'Poor'
+    elif score <= 80:
+        return 'Acceptable'
+    else:
+        return 'Good'
+
+cleaned_data['paw_score_level'] = cleaned_data.apply(create_paw_score_level, axis=1)
+
+# Calculate derived metrics
+cleaned_data['mortality_rate'] = (cleaned_data['head_placed'] -
+                                 cleaned_data['head_sold']) / cleaned_data['head_placed'] * 100
+cleaned_data['feed_efficiency'] = 1 / cleaned_data['feed_conversion']
+
+# Production days (date difference in days)
+cleaned_data['production_days'] = (pd.to_datetime(cleaned_data['last_date_sold']) -
+                                  pd.to_datetime(cleaned_data['first_date_placed'])).dt.days
+
+# Convert level columns to category
+cleaned_data['moisture_level'] = cleaned_data['moisture_level'].astype('category')
+cleaned_data['paw_score_level'] = cleaned_data['paw_score_level'].astype('category')
+```
+:::
+
+**New Variables Created**:
+
+-   `mortality_rate`: Percentage of birds that didn't survive (key performance metric)
+-   `feed_efficiency`: Inverse of feed conversion (higher is better)
+-   `production_days`: Days from placement to sale
+-   `moisture_level` & `paw_score_level`: Categorical performance levels
+
+### Step 7: Save Cleaned Data
+
+Finally, we save our cleaned dataset for analysis:
+
+::: panel-tabset
+#### R (tidyverse)
+
+```{r save-r, eval=FALSE, echo=TRUE}
+# Save cleaned data
+cleaned_data_path <- "MATH495_Spring26_ConsultingCourse/data/processed/Final_Cleaned_Litter_Survey.csv"
+write_csv(cleaned_data, cleaned_data_path)
+
+cat("Cleaned data saved to:", cleaned_data_path, "\n")
+cat("Final dimensions:", dim(cleaned_data), "\n")
+```
+
+#### Python (pandas)
+
+```{python save-python, eval=FALSE, echo=TRUE}
+# Save cleaned data
+cleaned_data_path = "MATH495_Spring26_ConsultingCourse/data/processed/Final_Cleaned_Litter_Survey_python.csv"
+cleaned_data.to_csv(cleaned_data_path, index=False)
+
+print(f"Cleaned data saved to: {cleaned_data_path}")
+print(f"Final shape: {cleaned_data.shape}")
+```
+:::
+
+**Result**: Final dataset has 2,528 rows and 44 columns (down from 77).
+
+## The Cleaned Dataset: Ready for Analysis
+
+Our cleaned dataset now contains:
+
+### Variables for Analysis
+
+**Litter Conditions (Predictors)**:
+
+-   `moisture_percent_num`: Numeric moisture percentage
+-   `moisture_level`: Categorical (Low/Medium/High)
+-   `moisture_composite`: Flag for composite responses
+-   `paw_score_num`: Numeric paw quality score
+-   `caked_litter_num`: Numeric caked litter percentage
+
+**Bird Performance (Outcomes)**:
+
+-   `feed_conversion`: Feed conversion ratio (lower is better)
+-   `livability`: Percentage of birds surviving
+-   `mortality_rate`: Calculated mortality percentage
+-   `avg_weight`: Average bird weight
+-   `feed_efficiency`: Feed efficiency (inverse of conversion)
+
+**Control Variables**:
+
+-   `season`: Season of survey
+-   `breed` : Bird breed
+-   `bird_type` : Type of bird - `hen_age_weeks` : Age in weeks - `production_days` : Days from placement to sale
+
+### Quick Analysis Example
+
+Let's perform a quick verification analysis to confirm our cleaning worked correctly:
+
+::: panel-tabset
+#### R (tidyverse)
+
+```{r quick-analysis-r, eval=TRUE}
+#| fig-alt: "Scatter plot showing a negative relationship between moisture percentage and feed conversion efficiency"
+# Load cleaned data
+cleaned_data <- read_csv("MATH495_Spring26_ConsultingCourse/data/processed/Final_Cleaned_Litter_Survey.csv")
+
+# Relationship between moisture and feed conversion
+library(ggplot2)
+ggplot(cleaned_data, aes(x = moisture_percent_num, y = feed_conversion)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(
+    x = "Moisture Percentage (%)",
+    y = "Feed Conversion Ratio",
+    title = "Moisture vs. Feed Efficiency"
+  ) +
+  theme_minimal()
+
+# Correlation
+cor_test <- cor.test(cleaned_data$moisture_percent_num,
+                     cleaned_data$feed_conversion)
+cat("Correlation:", round(cor_test$estimate, 3),
+    "(p-value:", round(cor_test$p.value, 4), ")")
+```
+
+#### Python (pandas + seaborn)
+
+```{python quick-analysis-python, eval=TRUE}
+#| fig-alt: "Scatter plot showing a negative relationship between moisture percentage and feed conversion efficiency"
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from scipy.stats import pearsonr
+
+# Load cleaned data
+cleaned_data = pd.read_csv("MATH495_Spring26_ConsultingCourse/data/processed/Final_Cleaned_Litter_Survey.csv")
+
+# Relationship between moisture and feed conversion
+plt.figure(figsize=(10, 6))
+sns.scatterplot(data=cleaned_data,
+                x='moisture_percent_num',
+                y='feed_conversion',
+                alpha=0.5)
+sns.regplot(data=cleaned_data,
+            x='moisture_percent_num',
+            y='feed_conversion',
+            scatter=False,
+            color='blue')
+
+plt.xlabel("Moisture Percentage (%)")
+plt.ylabel("Feed Conversion Ratio")
+plt.title("Moisture vs. Feed Efficiency")
+plt.show()
+
+# Correlation
+corr_data = cleaned_data[['moisture_percent_num', 'feed_conversion']].dropna()
+corr, p_value = pearsonr(corr_data['moisture_percent_num'],
+                         corr_data['feed_conversion'])
+print(f"Correlation: {corr:.3f} (p-value: {p_value:.4f})")
+```
+:::
+
+## Best Practices for Data Cleaning
+
+### 1. **Document Everything**
+
+-   Save your cleaning code (never do it interactively)
+-   Use version control (Git)
+-   Create a cleaning summary document
+
+### 2. **Validate Your Cleaning**
+
+-   Check row counts haven't changed unexpectedly
+-   Verify data type conversions
+-   Spot-check a few records manually
+-   Compare before/after summary statistics
+
+### 3. **Handle Missing Data Intentionally**
+
+-   Don't just drop missing values
+-   Understand *why* data is missing
+-   Document your missing data strategy
+
+### 4. **Create Derived Variables Systematically**
+
+-   Use clear, consistent naming
+-   Document calculation formulas
+-   Consider which variables will be most useful for analysis
+
+### 5. **Preserve Raw Data**
+
+-   Never overwrite raw data
+-   Always create new cleaned files
+-   Make your cleaning process reproducible
+
+## Hands-On Exercise
+
+### Task 1: Reproduce the Cleaning
+
+### Task 2: Extend the Cleaning
+
+Add one additional derived variable to the poultry litter dataset:
+
+-   **Option A**: Create a "feed_cost_per_bird" variable using [Industry feed cost data](https://www.ers.usda.gov/data-products/feed-grains-database/)
+-   **Option B**: Create categorical bins for feed conversion ratio (e.g., "Excellent", "Good", "Fair", "Poor")
+-   **Option C**: Create a "season_numeric" variable encoding seasons as 1-4 for trend analysis
+
+Submit your extended cleaning script plus a brief write-up of what you added and why.
+
+## Additional Reading
+
+-   **R for Data Science**: Chapters 5-7 (Data transformation) [R for Data Science](https://r4ds.hadley.nz/)
+-   **Python for Data Analysis**: Chapters 5-8 (Data cleaning with pandas)
+-   **Tidy Data Paper**: Hadley Wickham's ["Tidy Data"](https://www.jstatsoft.org/article/view/v059i10) (v59 i10)
+
+## Summary
+
+In this lecture, we've established the foundation for our poultry litter management analysis by:
+
+1.  **Understanding** the dataset structure and variable meanings
+2.  **Implementing** a systematic data cleaning workflow
+3.  **Demonstrating** equivalent implementations in R and Python
+4.  **Creating** derived variables for enhanced analysis
+5.  **Validating** our cleaning process for accuracy
+
+**Key Insight**: Data cleaning isn't just a technical prerequisite—it's an opportunity to deepen your understanding of the data, its limitations, and its potential for generating insights.
+
+**Next Session**: In Lecture 2, we'll build on this foundation to explore statistical analysis techniques, interpret results, and translate findings into actionable business recommendations.
+
+------------------------------------------------------------------------
