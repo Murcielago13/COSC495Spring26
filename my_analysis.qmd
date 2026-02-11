@@ -1,0 +1,125 @@
+---
+title: "My Analysis Report"
+subtitle: "Exploring the Poultry Litter Dataset"
+author: 
+  - "Brando Banda-Perez"
+  - "Collaborator Name"
+date: last-modified
+format: 
+  html:
+    toc: true
+    number-sections: true
+    theme: cosmo
+    css: styles.css
+  pdf:
+    documentclass: article
+    papersize: a4
+  
+bibliography: references.bib
+
+execute:
+  echo: true
+  warning: false
+  message: false
+
+params:
+  data_file: "data.csv"
+  year: 2023
+---
+
+# Main Title (Heading 1)
+## section (Heading 2)
+### Subsection (Heading 3)
+
+*italic* or _italic_
+**bold** or _bold_
+***bold italic*** or _bold italic_
+
+- Item one
+- Item two
+  - Indented sub-item
+- Item three
+
+1. First item
+2. Second item
+   1. Sub-item (use two spaces or a tab)
+3. Third item
+
+[Quarto documentation](https://quarto.org/docs/)
+
+![Poultry litter data plot](figures/plot.png)
+
+Use the 'mean()' function to compute the average.
+
+'''r
+x <- 1:10
+mean(x)
+'''
+
+| Variable | Description | Units |
+|----------|-------------|-------|
+| Weight   | Bird weight | kg    |
+| Feed     | Feed intake | g/day |
+| Age      | Bird age    | days  |
+
+> This is a quoted paragraph.
+> It can span multiple lines.
+
+---
+
+'''{{r eval=FALSE}}
+# R code here
+library(tidyverse)
+data <- read_csv("data.csv")
+'''
+
+'''{{python eval=FALSE}}
+# Python code here
+import pandas as pd
+df = pd.read_csv("data.csv")
+'''
+
+'''{{r echo=FALSE, warning=FALSE, eval=FALSE}}
+# This code will run but not appear in the output; warnings are suppressed summary(data)
+'''
+
+*   'echo=FALSE' - hide the code (only output shown).
+*   'eval=FALSE' - do not execute the code (good for displaying code examples).
+*   'include=FALSE' - run the code but hide both code and output (useful for setup).
+*   'warning=FALSE', 'message=FALSE' - suppress warnings and messages.
+*   'fig.width=7, fig.height=5' - set plot dimensions (in inches).
+*   'cache=TRUE' - cache results for faster re-rendering
+
+'''{{r load-data, eval=FALSE}}
+data <- read_csv("data.csv")
+'''
+
+The mean weight is '{r mean(data$weight)}' kg.
+
+'''{{r fig.width=7, fig.height=5}}
+library(ggplot2)
+ggplot(data, aes(x = age, y = weight)) + geom_point()
+'''
+
+<img src="figures/plot.png" alt="Plot" width="600"/>
+
+'''{r}
+library(knitr)
+head(data) |> kable()
+'''
+
+@article{author2023,
+  title = {Title},
+  author = {Author, A.},
+  year = {2023}
+  journal = {Journal Name}
+  }
+
+'''{{r fig-plot, fig.cap="My figure."}}
+plot(x, y)
+'''
+
+'Figure \@ref(fig:fig=plot)'
+
+'''{{r child="section1.qmd"}}
+'''
